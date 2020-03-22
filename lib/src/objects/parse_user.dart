@@ -118,11 +118,10 @@ class ParseUser extends ParseObject implements ParseCloneable {
     try {
       final Uri url = getSanitisedUri(_client, '$keyEndPointUserName');
       final Response response = await _client.get(url, headers: headers);
-      return await _handleResponse(this, response,
-          ParseApiRQ.currentUser, _debug, this.parseClassName);
+      return await _handleResponse(
+          this, response, ParseApiRQ.currentUser, _debug, this.parseClassName);
     } on Exception catch (e) {
-      return handleException(
-          e, ParseApiRQ.currentUser, _debug, parseClassName);
+      return handleException(e, ParseApiRQ.currentUser, _debug, parseClassName);
     }
   }
 
@@ -174,6 +173,8 @@ class ParseUser extends ParseObject implements ParseCloneable {
   /// provided, call this method to login.
   Future<ParseResponse> login() async {
     try {
+      final String installationId = await _getInstallationId();
+
       final Map<String, dynamic> queryParams = <String, String>{
         keyVarUsername: username,
         keyVarPassword: password
@@ -185,6 +186,7 @@ class ParseUser extends ParseObject implements ParseCloneable {
       final Response response =
           await _client.get(url, headers: <String, String>{
         keyHeaderRevocableSession: '1',
+        if (installationId != null) keyHeaderInstallationId: installationId,
       });
 
       return await _handleResponse(
@@ -224,11 +226,13 @@ class ParseUser extends ParseObject implements ParseCloneable {
   static Future<ParseResponse> loginWith(
       String provider, Object authData, Object data) async {
     final ParseUser user = ParseUser.createUser();
-    final ParseResponse response = await user._loginWith(provider, authData, data);
+    final ParseResponse response =
+        await user._loginWith(provider, authData, data);
     return response;
   }
 
-  Future<ParseResponse> _loginWith(String provider, Object authData, Object data) async {
+  Future<ParseResponse> _loginWith(
+      String provider, Object authData, Object data) async {
     try {
       final Uri url = getSanitisedUri(_client, '$keyEndPointUsers');
       final String installationId = await _getInstallationId();
